@@ -55,12 +55,18 @@ class DsmrP1CustomSensor : public PollingComponent {
 	
     // * Start software serial for p1 meter
     p1_serial.begin(BAUD_RATE);
+	
+	ESP_LOGD("DmsrCustom","Init baud rate %f", BAUD_RATE);
   }
 
   void update() override {
-	  
+	
+	ESP_LOGD("DmsrCustom","Updating..");	
+	
     if (p1_serial.available())
     {
+	  ESP_LOGD("DmsrCustom","Data ready..");	
+	  
       memset(telegram, 0, sizeof(telegram));
 
       while (p1_serial.available())
@@ -76,6 +82,8 @@ class DsmrP1CustomSensor : public PollingComponent {
         bool result = decode_telegram(len + 1);
         if (result)
         {  
+		  ESP_LOGD("DmsrCustom","CRC Ok");	
+		  
           consumption_low_tarif_sensor->publish_state(CONSUMPTION_LOW_TARIF);
           consumption_high_tarif_sensor->publish_state(CONSUMPTION_HIGH_TARIF);
           actual_consumption_sensor->publish_state(ACTUAL_CONSUMPTION);
@@ -88,8 +96,12 @@ class DsmrP1CustomSensor : public PollingComponent {
           long_power_outages_sensor->publish_state(LONG_POWER_OUTAGES);
           short_power_drops_sensor->publish_state(SHORT_POWER_DROPS);
           short_power_peaks_sensor->publish_state(SHORT_POWER_PEAKS);
-        }
+        } else {
+			ESP_LOGD("DmsrCustom","CRC Not Ok");	
+		}
       }
+	} else {
+		ESP_LOGD("DmsrCustom","No data ready..");
 	}  
   }
   
@@ -282,4 +294,3 @@ class DsmrP1CustomSensor : public PollingComponent {
   } 
   
 };
-

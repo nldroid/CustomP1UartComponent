@@ -19,32 +19,37 @@ api:
 
 ota:
 
-sensor:
-  - platform: custom
-    lambda: |-
-      auto dsmr_p1_sensor = new DsmrP1CustomSensor();
-      App.register_component(dsmr_p1_sensor);
-      return {dsmr_p1_sensor->consumption_low_tarif_sensor, dsmr_p1_sensor->consumption_high_tarif_sensor, dsmr_p1_sensor->actual_consumption_sensor, dsmr_p1_sensor->instant_power_current_sensor, dsmr_p1_sensor->instant_power_usage_sensor, dsmr_p1_sensor->gas_meter_m3_sensor, dsmr_p1_sensor->actual_tarif_sensor, dsmr_p1_sensor->short_power_outages_sensor, dsmr_p1_sensor->long_power_outages_sensor, dsmr_p1_sensor->short_power_drops_sensor, dsmr_p1_sensor->short_power_peaks_sensor};
-      
     sensors:
     - name: "Consumption Low Tarif Sensor"
       unit_of_measurement: kWh
       accuracy_decimals: 3
+      filters:
+        - multiply: 0.001
     - name: "Consumption High Tarif Sensor"
       unit_of_measurement: kWh
       accuracy_decimals: 3  
+      filters:
+        - multiply: 0.001
     - name: "Actual Consumption Sensor"
       unit_of_measurement: kW
       accuracy_decimals: 3      
+      filters:
+        - multiply: 0.001
     - name: "Instant Power Current Sensor"
-      unit_of_measurement: kW
+      unit_of_measurement: A
       accuracy_decimals: 3      
+      filters:
+        - multiply: 0.001
     - name: "Instant Power Usage Sensor"
       unit_of_measurement: kW
       accuracy_decimals: 3      
+      filters:
+        - multiply: 0.001
     - name: "Gas Meter M3 Sensor"
-      unit_of_measurement: M3
+      unit_of_measurement: m3
       accuracy_decimals: 3      
+      filters:
+        - multiply: 0.001
     - name: "Actual Tarif Sensor"
     - name: "Short Power Outages Sensor"
       accuracy_decimals: 0      
@@ -53,4 +58,4 @@ sensor:
     - name: "Short Power Drops Sensor"
       accuracy_decimals: 0      
     - name: "Short Power Peaks Sensor"
-      accuracy_decimals: 0     
+      accuracy_decimals: 0

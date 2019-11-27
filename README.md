@@ -1,2 +1,9 @@
 # DsmrP1CustomSensor
-Custom EspHome sensor for reading P1 port on dutch smart meters
+
+This is my first custom component for EspHome. It can be used to read DSMR data from the P1 port of dutch smart meters
+
+I haven't tested it yet because i didn't create a cable yet
+
+The work is based on this project: https://github.com/fliphess/esp8266_p1meter
+
+You can also find there how to create a cable

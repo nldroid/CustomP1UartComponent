@@ -1,38 +1,125 @@
 #include "esphome.h"
-#include <SoftwareSerial.h>
-// https://github.com/matthijskooijman/arduino-dsmr
 #include "dsmr.h"
 
-// * Baud rate for both hardware and software serial
-#define BAUD_RATE 115200
-#define SWSERIAL_BAUD_RATE 115200
+using namespace esphome;
 
-// * Max telegram length
-#define P1_MAXLINELENGTH 75
 #define P1_MAXTELEGRAMLENGTH 1500
+#define DELAY_MS 300000 // Delay in miliseconds before reading another telegram
 
-// * P1 Meter RX pin
-#define P1_SERIAL_RX D2
+// Use data structure according to: https://github.com/matthijskooijman/arduino-dsmr
 
-#define USE_7E1 0
-
-using MyData = ParsedData<
-  /* String */ p1_version,
-  /* FixedValue */ energy_delivered_tariff1
+using MyData = ParsedData <
+  /* FixedValue */ energy_delivered_tariff1,
+  /* FixedValue */ energy_delivered_tariff2,
+  /* FixedValue */ energy_returned_tariff1,
+  /* FixedValue */ energy_returned_tariff2,
+  /* FixedValue */ power_delivered,
+  /* FixedValue */ power_returned,
+  /* FixedValue */ voltage_l1,
+  /* FixedValue */ voltage_l2,
+  /* FixedValue */ voltage_l3,
+  /* FixedValue */ current_l1,
+  /* FixedValue */ current_l2,
+  /* FixedValue */ current_l3,
+  /* FixedValue */ power_delivered_l1,
+  /* FixedValue */ power_delivered_l2,
+  /* FixedValue */ power_delivered_l3,
+  /* FixedValue */ power_returned_l1,
+  /* FixedValue */ power_returned_l2,
+  /* FixedValue */ power_returned_l3,
+  /* uint16_t */ gas_device_type,
+  /* uint8_t */ gas_valve_position,
+  /* TimestampedFixedValue */ gas_delivered
 >;
 
-// * Initiate Software Serial
-SoftwareSerial p1_serial(P1_SERIAL_RX, SW_SERIAL_UNUSED_PIN, true, P1_MAXLINELENGTH); // (RX, TX, inverted, buffer)
+class CustomP1UartComponent : public Component, public uart::UARTDevice {
+ protected:
+   char telegram[P1_MAXTELEGRAMLENGTH];
+   char c;
+   int telegramlen;
+   bool headerfound;
+   bool footerfound;
+   unsigned long lastread;
+   int bytes_read;
+   
+  bool read_message() {
+	//ESP_LOGD("DmsrCustom","Read message");
+	headerfound = false;
+	footerfound = false;
+	telegramlen = 0;
+	bytes_read = 0;	
+	
+	// Messages come in batches. Read until footer.
+	while (!footerfound) {
+		// Loop while there's data to read
+		while (available()) {
+			if (telegramlen >= P1_MAXTELEGRAMLENGTH) {  // Buffer overflow
+				headerfound = false;
+				footerfound = false;
+				ESP_LOGD("DmsrCustom","Error: Message larger than buffer");
+			}
+			bytes_read++;
+			c = read();
+			if (c == 47) { // header: forward slash
+				// ESP_LOGD("DmsrCustom","Header found");
+				headerfound = true;
+				telegramlen = 0;
+			}
+			if (headerfound) {
+				telegram[telegramlen] = c;
+				telegramlen++;
+				if (c == 33) { // footer: exclamation mark
+					ESP_LOGD("DmsrCustom","Footer found");
+					footerfound = true;
+				} else {
+					if (footerfound && c == 10) { // last \n after footer
+						// Parse message
+						MyData data;
+						// ESP_LOGD("DmsrCustom","Trying to parse");
+						ParseResult<void> res = P1Parser::parse(&data, telegram, telegramlen, false); // Parse telegram accoring to data definition. Ignore unknown values.
+						if (res.err) {
+							// Parsing error, show it
+							Serial.println(res.fullError(telegram, telegram + telegramlen));
+						} else {
+							publish_sensors(data);
+							return true; // break out function
+						}
+					}	
+				}
+			} 
+		} // While data available	
+	} // !footerfound	
+	ESP_LOGD("DmsrCustom","Exited after: %i bytes", bytes_read);
+	return false;	  
+  }
 
-class DsmrP1CustomSensor : public Component {
+  void publish_sensors(MyData data){
+	if(data.energy_delivered_tariff1_present)s_energy_delivered_tariff1->publish_state(data.energy_delivered_tariff1);
+	if(data.energy_delivered_tariff2_present)s_energy_delivered_tariff2->publish_state(data.energy_delivered_tariff2);
+	if(data.energy_returned_tariff1_present)s_energy_returned_tariff1->publish_state(data.energy_returned_tariff1);
+	if(data.energy_returned_tariff2_present)s_energy_returned_tariff2->publish_state(data.energy_returned_tariff2);
+	if(data.power_delivered_present)s_power_delivered->publish_state(data.power_delivered);
+	if(data.power_returned_present)s_power_returned->publish_state(data.power_returned);
+	if(data.voltage_l1_present)s_voltage_l1->publish_state(data.voltage_l1);
+	if(data.voltage_l2_present)s_voltage_l2->publish_state(data.voltage_l2);
+	if(data.voltage_l3_present)s_voltage_l3->publish_state(data.voltage_l3);
+	if(data.current_l1_present)s_current_l1->publish_state(data.current_l1);
+	if(data.current_l2_present)s_current_l2->publish_state(data.current_l2);
+	if(data.current_l3_present)s_current_l3->publish_state(data.current_l3);
+	if(data.power_delivered_l1_present)s_power_delivered_l1->publish_state(data.power_delivered_l1);
+	if(data.power_delivered_l2_present)s_power_delivered_l2->publish_state(data.power_delivered_l2);
+	if(data.power_delivered_l3_present)s_power_delivered_l3->publish_state(data.power_delivered_l3);
+	if(data.power_returned_l1_present)s_power_returned_l1->publish_state(data.power_returned_l1);
+	if(data.power_returned_l2_present)s_power_returned_l2->publish_state(data.power_returned_l2);
+	if(data.power_returned_l3_present)s_power_returned_l3->publish_state(data.power_returned_l3);
+	if(data.gas_device_type_present)s_gas_device_type->publish_state(data.gas_device_type);
+	if(data.gas_valve_position_present)s_gas_valve_position->publish_state(data.gas_valve_position);
+	if(data.gas_delivered_present)s_gas_delivered->publish_state(data.gas_delivered);
+  };  
+   
  public:
-   // * Set to store received telegram
-  char line[P1_MAXLINELENGTH];
-  char telegram[P1_MAXTELEGRAMLENGTH];
-  int telegramlen;
-  
-  Sensor *s_p1_version = new Sensor();
-/*  Sensor *s_energy_delivered_tariff1 = new Sensor();
+  CustomP1UartComponent(UARTComponent *parent) : UARTDevice(parent) {}
+  Sensor *s_energy_delivered_tariff1 = new Sensor();
   Sensor *s_energy_delivered_tariff2 = new Sensor();
   Sensor *s_energy_returned_tariff1 = new Sensor();
   Sensor *s_energy_returned_tariff2 = new Sensor();
@@ -53,172 +140,24 @@ class DsmrP1CustomSensor : public Component {
   Sensor *s_power_returned_l2 = new Sensor();
   Sensor *s_power_returned_l3 = new Sensor();
   Sensor *s_gas_device_type = new Sensor();
-  Sensor *s_gas_equipment_id = new Sensor();
   Sensor *s_gas_valve_position = new Sensor();
   Sensor *s_gas_delivered = new Sensor(); 
-*/
-			
-  // DsmrP1CustomSensor() : PollingComponent(1000) { }
-  DsmrP1CustomSensor() {}
- 
-	/*
-	Serial.print(Item::name);
-	Serial.print(F(": "));
-	Serial.print(i.val());
-	Serial.print(Item::unit());
-	Serial.println();
-	*/
- 
-/*	struct Publish {
-		template<typename Item>
-		void apply(Item &i) {
-			if (i.present()) {
-				switch(Item::name) {
-					case "p1_version":
-						s_p1_version->publish_state(i.val);
-						break;
-					case "energy_delivered_tariff1":
-						s_energy_delivered_tariff1->publish_state(i.val);
-						break;
-					case "energy_delivered_tariff2":
-						s_energy_delivered_tariff2->publish_state(i.val);
-						break;
-					case "energy_returned_tariff1":
-						s_energy_returned_tariff1->publish_state(i.val);
-						break;
-					case "energy_returned_tariff2":
-						s_energy_returned_tariff2->publish_state(i.val);
-						break;
-					case "electricity_tariff":
-						s_electricity_tariff->publish_state(i.val);
-						break;
-					case "power_delivered":
-						s_power_delivered->publish_state(i.val);
-						break;
-					case "power_returned":
-						s_power_returned->publish_state(i.val);
-						break;
-					case "electricity_threshold":
-						s_electricity_threshold->publish_state(i.val);
-						break;
-					case "voltage_l1":
-						s_voltage_l1->publish_state(i.val);
-						break;
-					case "voltage_l2":
-						s_voltage_l2->publish_state(i.val);
-						break;
-					case "voltage_l3":
-						s_voltage_l3->publish_state(i.val);
-						break;
-					case "current_l1":
-						s_current_l1->publish_state(i.val);
-						break;
-					case "current_l2":
-						s_current_l2->publish_state(i.val);
-						break;
-					case "current_l3":
-						s_current_l3->publish_state(i.val);
-						break;
-					case "power_delivered_l1":
-						s_power_delivered_l1->publish_state(i.val);
-						break;
-					case "power_delivered_l2":
-						s_power_delivered_l2->publish_state(i.val);
-						break;
-					case "power_delivered_l3":
-						s_power_delivered_l3->publish_state(i.val);
-						break;
-					case "power_returned_l1":
-						s_power_returned_l1->publish_state(i.val);
-						break;
-					case "power_returned_l2":
-						s_power_returned_l2->publish_state(i.val);
-						break;
-					case "power_returned_l3":
-						s_power_returned_l3->publish_state(i.val);
-						break;
-					case "gas_device_type":
-						s_gas_device_type->publish_state(i.val);
-						break;
-					case "gas_equipment_id":
-						s_gas_equipment_id->publish_state(i.val);
-						break;
-					case "gas_valve_position":
-						s_gas_valve_position->publish_state(i.val);
-						break;
-					case "gas_delivered:
-						s_gas_delivered->publish_state(i.val);					
-						break; 
-				} 
-			}
-		}
-	};
-*/
 
   void setup() override {
-	Serial.begin(BAUD_RATE);
-	
-    // * Start software serial for p1 meter
-    p1_serial.begin(SWSERIAL_BAUD_RATE);
+    lastread = 0;
+	pinMode(D5, OUTPUT); // Set D5 as output pin
+	digitalWrite(D5,LOW); // Set low, don't request message from P1 port
   }
-
+  
   void loop() override {
+	unsigned long now = millis();
 	
-	
-    if (p1_serial.available())
-    {
-      memset(line, 0, sizeof(line));
+	if (now - lastread > DELAY_MS || lastread == 0) {
+		lastread = now;
+		digitalWrite(D5,HIGH); // Set high, request new message from P1 port
+		bool have_message = read_message();
+		digitalWrite(D5,LOW); // Set low, stop requesting messages from P1 port
+	}
+  }	
 
-      while (p1_serial.available())
-      {
-        ESP.wdtDisable();
-
-        int len = p1_serial.readBytesUntil('\n', line, P1_MAXLINELENGTH); // Read line for line
-        
-		if (USE_7E1 == 1) 
-		{
-			// Shift bits for parity
-			for (int cnt = 0; cnt < len; cnt++)
-			line[cnt] &= ~(1 << 7);	
-        }
-		
-        ESP.wdtEnable(1);
-
-        line[len] = '\n';
-		
-        yield();
-		
-		if (line[0] == 47) // Slash found, start of telegram
-		{ 
-			telegramlen = 0;
-			memset(telegram, 0, sizeof(telegram)); // Make empty
-		}
-		
-		// Copy line data to telegram
-		for (int i = 0; i < len; i++)
-		{
-			telegram[telegramlen + i] = line[i];
-		}
-		telegramlen = telegramlen + len;
-		
-		if (line[0] == 33) // Exclamation mark found, end of telegram
-		{ 
-			MyData data;
-			  
-			ParseResult<void> res = P1Parser::parse(&data, telegram, telegramlen, true);
-			if (res.err) {
-				// Parsing error, show it
-				Serial.println(res.fullError(telegram, telegram + telegramlen));
-			} else {
-				// Parsed succesfully, print all values
-				//data.applyEach(Publish());
-			}		
-		}
-      }
-	}  
-  }
-  
- private:
-
-  
 };

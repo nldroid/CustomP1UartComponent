@@ -1,73 +1,121 @@
 esphome:
-  includes:
-    - dsmr_p1_sensor.h
-  libraries:
-    - "EspSoftwareSerial" 
-  name: pulse_meterkast
+  name: esp_dsmr
   platform: ESP8266
   board: d1_mini
+  includes:
+    - dsmr_p1_uart.h
+  libraries:
+    - "Dsmr"
 
 wifi:
-  ssid: 'MySSID'
-  password: 'MyPassword'
-  
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "esp_dsmr_uart Fallback Hotspot"
+    password: ""
+
+captive_portal:
+
 # Enable logging
 logger:
+  level: DEBUG
+  esp8266_store_log_strings_in_flash: False
 
 # Enable Home Assistant API
 api:
+  password: ""
 
 ota:
+  password: ""
+  
+uart:
+  - rx_pin: D2
+    baud_rate: 115200
+    id: uart_bus  
 
 sensor:
-  - platform: pulse_counter
-    pin: GPIO0
-    unit_of_measurement: 'liter'
-    name: 'Watermeter'
-
   - platform: custom
     lambda: |-
-      auto dsmr_p1_sensor = new DsmrP1CustomSensor();
+      auto dsmr_p1_sensor = new CustomP1UartComponent(id(uart_bus));
       App.register_component(dsmr_p1_sensor);
-      return {dsmr_p1_sensor->consumption_low_tarif_sensor, dsmr_p1_sensor->consumption_high_tarif_sensor, dsmr_p1_sensor->actual_consumption_sensor, dsmr_p1_sensor->instant_power_current_sensor, dsmr_p1_sensor->instant_power_usage_sensor, dsmr_p1_sensor->gas_meter_m3_sensor, dsmr_p1_sensor->actual_tarif_sensor, dsmr_p1_sensor->short_power_outages_sensor, dsmr_p1_sensor->long_power_outages_sensor, dsmr_p1_sensor->short_power_drops_sensor, dsmr_p1_sensor->short_power_peaks_sensor};
+      return {dsmr_p1_sensor->s_energy_delivered_tariff1, dsmr_p1_sensor->s_energy_delivered_tariff2, dsmr_p1_sensor->s_energy_returned_tariff1, dsmr_p1_sensor->s_energy_returned_tariff2, dsmr_p1_sensor->s_power_delivered, dsmr_p1_sensor->s_power_returned, dsmr_p1_sensor->s_voltage_l1, dsmr_p1_sensor->s_voltage_l2, dsmr_p1_sensor->s_voltage_l3, dsmr_p1_sensor->s_current_l1, dsmr_p1_sensor->s_current_l2, dsmr_p1_sensor->s_current_l3, dsmr_p1_sensor->s_power_delivered_l1, dsmr_p1_sensor->s_power_delivered_l2, dsmr_p1_sensor->s_power_delivered_l3, dsmr_p1_sensor->s_power_returned_l1, dsmr_p1_sensor->s_power_returned_l2, dsmr_p1_sensor->s_power_returned_l3, dsmr_p1_sensor->s_gas_device_type, dsmr_p1_sensor->s_gas_valve_position, dsmr_p1_sensor->s_gas_delivered};
 
     sensors:
     - name: "Consumption Low Tarif Sensor"
       unit_of_measurement: kWh
       accuracy_decimals: 3
-      filters:
-        - multiply: 0.001
     - name: "Consumption High Tarif Sensor"
       unit_of_measurement: kWh
       accuracy_decimals: 3  
-      filters:
-        - multiply: 0.001
+    - name: "Return Low Tarif Sensor"
+      unit_of_measurement: kWh
+      accuracy_decimals: 3
+    - name: "Return High Tarif Sensor"
+      unit_of_measurement: kWh
+      accuracy_decimals: 3  
     - name: "Actual Consumption Sensor"
-      unit_of_measurement: kW
+      unit_of_measurement: W
       accuracy_decimals: 3      
       filters:
-        - multiply: 0.001
-    - name: "Instant Power Current Sensor"
+        - multiply: 1000
+    - name: "Actual Delivery Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Instant Voltage L1 Sensor"
+      unit_of_measurement: V
+      accuracy_decimals: 3      
+    - name: "Instant Voltage L2 Sensor"
+      unit_of_measurement: V
+      accuracy_decimals: 3      
+    - name: "Instant Voltage L3 Sensor"
+      unit_of_measurement: V
+      accuracy_decimals: 3      
+    - name: "Instant Current L1 Sensor"
       unit_of_measurement: A
       accuracy_decimals: 3      
-      filters:
-        - multiply: 0.001
-    - name: "Instant Power Usage Sensor"
-      unit_of_measurement: kW
+    - name: "Instant Current L2 Sensor"
+      unit_of_measurement: A
+      accuracy_decimals: 3      
+    - name: "Instant Current L3 Sensor"
+      unit_of_measurement: A
+      accuracy_decimals: 3      
+    - name: "Power Delivered L1 Sensor"
+      unit_of_measurement: W
       accuracy_decimals: 3      
       filters:
-        - multiply: 0.001
+        - multiply: 1000
+    - name: "Power Delivered L2 Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Power Delivered L2 Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Power Returned L1 Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Power Returned L2 Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Power Returned L2 Sensor"
+      unit_of_measurement: W
+      accuracy_decimals: 3      
+      filters:
+        - multiply: 1000
+    - name: "Gas device type Sensor"
+    - name: "Gas valve position Sensor"  
     - name: "Gas Meter M3 Sensor"
       unit_of_measurement: m3
       accuracy_decimals: 3      
-      filters:
-        - multiply: 0.001
-    - name: "Actual Tarif Sensor"
-    - name: "Short Power Outages Sensor"
-      accuracy_decimals: 0      
-    - name: "Long Power Outages Sensor"
-      accuracy_decimals: 0      
-    - name: "Short Power Drops Sensor"
-      accuracy_decimals: 0      
-    - name: "Short Power Peaks Sensor"
-      accuracy_decimals: 0     
+      

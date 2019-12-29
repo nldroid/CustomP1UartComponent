@@ -12,7 +12,7 @@ The work is based on these projects:
 ## Hardware
 
 I used a Wemos D1 mini to connect to the P1 port but it will probably work with most ESP boards. You need some kind of hardware inverter because the UART component doesn't support inverting the signal with a software setting.
-I connected D2 to port A2 from a 7404 IC hardware inverter and Port A1 from the inverter to Port 5 from the P1 connector.
+I connected D2 to port 2 (B1) on a 7404 IC hardware inverter and Port 1 (A1) from the inverter to Port 5 from the P1 connector.
 Port D5 from the Wemos is connected to port 2 from the p1 connector. This is used to request a message from the meter.
 R1 is needed for my Iskra meter. It won't send any telegrams when it's not there.
 

@@ -7,11 +7,11 @@ The work is based on these projects:
 - https://github.com/rspaargaren/DSMR_ESPHOME (We shared thoughts on how to read the P1 port)
 - https://github.com/matthijskooijman/arduino-dsmr (The library that i use to parse the telegrams)
 - https://github.com/brandond/esphome-tuya_pir (Example how to read data from UART)
-- http://domoticx.com/p1-poort-slimme-meter-uitlezen-hardware/ (Information about hardware requirements)
+- http://domoticx.com/p1-poort-slimme-meter-uitlezen-hardware/ (Information about hardware requirements. Examples for inverters.)
 
 ## Hardware
 
-I used a Wemos D1 mini to connect to the P1 port but it will probably work with most ESP boards. You need some kind of hardware inverter because the UART component doesn't support inverting the signal with a software setting.
+I used a Wemos D1 mini to connect to the P1 port but it will probably work with most ESP boards. You need some kind of ![hardware inverter](https://en.wikipedia.org/wiki/Inverter_(logic_gate)) because the UART component doesn't support inverting the signal with a software setting.
 I connected D2 to port 2 (B1) on a 7404 IC hardware inverter and Port 1 (A1) from the inverter to Port 5 from the P1 connector.
 Port D5 from the Wemos is connected to port 2 from the p1 connector. This is used to request a message from the meter.
 R1 is needed for my Iskra meter. It won't send any telegrams when it's not there.

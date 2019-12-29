@@ -3,7 +3,7 @@
 This is my first custom component for EspHome. It can be used to read DSMR data from the P1 port of dutch smart meters
 
 The work is based on these projects:
-- https://esphome.io/custom/uart.html (The project we're the custom component is for)
+- https://esphome.io/custom/uart.html (The project where the custom component is for)
 - https://github.com/rspaargaren/DSMR_ESPHOME (We shared thoughts on how to read the P1 port)
 - https://github.com/matthijskooijman/arduino-dsmr (The library that i use to parse the telegrams)
 - https://github.com/brandond/esphome-tuya_pir (Example how to read data from UART)

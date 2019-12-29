@@ -16,7 +16,7 @@ I connected D2 to port 2 (B1) on a 7404 IC hardware inverter and Port 1 (A1) fro
 Port D5 from the Wemos is connected to port 2 from the p1 connector. This is used to request a message from the meter.
 R1 is needed for my Iskra meter. It won't send any telegrams when it's not there.
 
-![Schema](https://github.com/nldroid/CustomP1UartComponent/raw/master/p1_meter_schema.png)
+![Schema](https://raw.githubusercontent.com/nldroid/CustomP1UartComponent/master/docs/p1_meter_schema.png)
 
 ## Software
 

@@ -9,12 +9,12 @@ The work is based on these projects:
 - https://github.com/brandond/esphome-tuya_pir (Example how to read data from UART)
 - http://domoticx.com/p1-poort-slimme-meter-uitlezen-hardware/ (Information about hardware requirements)
 
-##Hardware
+## Hardware
 
 I used a Wemos D1 mini to connect to the P1 port but it will probably work with most ESP boards. You need some kind of hardware inverter because the UART component doesn't support inverting the signal with a software setting.
 I connected D2 to port A2 from a 7404 IC hardware inverter and Port A1 from the inverter to Port 5 from the P1 connector.
 Port D5 from the Wemos is connected to port 2 from the p1 connector. This is used to request a message from the meter.
 
-##Software
+## Software
 
 Just add the .h file in your config folder and see the .yaml file for usage

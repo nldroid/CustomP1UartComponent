@@ -12,7 +12,7 @@ The work is based on these projects:
 ## Hardware
 
 I used a Wemos D1 mini to connect to the P1 port but it will probably work with most ESP boards. You need some kind of ![hardware inverter](https://en.wikipedia.org/wiki/Inverter_(logic_gate)) because the UART component doesn't support inverting the signal with a software setting.
-I connected D2 to port 2 (B1) on a 7404 IC hardware inverter and Port 1 (A1) from the inverter to Port 5 from the P1 connector.
+Port 5 from the P1 connector goes to pin 1 (A1) from the 7404. Output pin 2 from the 7404 goes to port D2 on the Wemos.
 Port D5 from the Wemos is connected to port 2 from the p1 connector. This is used to request a message from the meter.
 R1 is needed for my Iskra meter. It won't send any telegrams when it's not there.
 
@@ -23,5 +23,9 @@ R1 is needed for my Iskra meter. It won't send any telegrams when it's not there
 ![Bread board](https://raw.githubusercontent.com/nldroid/CustomP1UartComponent/master/docs/breadboard.jpg)
 
 ## Software
-
 Just add the .h file in your config folder and see the .yaml file for usage
+
+## Limitations
+The software is only usable for meters with ![8N1](https://en.wikipedia.org/wiki/8-N-1) serial communication. This is the case for newer dsmr protocols. Older procols use 7E1. You can change the software and shift the char one bit (c &= ~(1 << 7);).
+Real old dsmr protocols don't have a CRC at the end of a telegram and the dsmr parser that i use, doesn't support these old protocols.
+

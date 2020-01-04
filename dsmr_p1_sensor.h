@@ -5,6 +5,7 @@ using namespace esphome;
 
 #define P1_MAXTELEGRAMLENGTH 1500
 #define DELAY_MS 60000 // Delay in miliseconds before reading another telegram
+#define WAIT_FOR_DATA_MS 2000
 
 // Use data structure according to: https://github.com/matthijskooijman/arduino-dsmr
 
@@ -41,19 +42,34 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
    bool footerfound;
    unsigned long lastread;
    int bytes_read;
+  
+  bool data_available() {
+	// See if there's data available.
+	unsigned long currentMillis = millis();
+	unsigned long previousMillis = currentMillis; 
+  
+	while (currentMillis - previousMillis < WAIT_FOR_DATA_MS) { // wait in miliseconds
+		if (available()) {
+			return true;
+		}
+	}
+	return false;  
+  }  
    
   bool read_message() {
 	//ESP_LOGD("DmsrCustom","Read message");
 	headerfound = false;
 	footerfound = false;
 	telegramlen = 0;
-	bytes_read = 0;	
+	bytes_read = 0;
+	unsigned long currentMillis = millis();
+	unsigned long previousMillis = currentMillis; 	
 	
-	if (available()) {
+	if (available()) { // Check to be sure
 		// Messages come in batches. Read until footer.
-		while (!footerfound) {
+		while (!footerfound && currentMillis - previousMillis < 5000) { // Loop while there's no footer found with a maximum of 5 seconds
 			// Loop while there's data to read
-			while (available()) {
+			while (available()) { // Loop while there's data 
 				if (telegramlen >= P1_MAXTELEGRAMLENGTH) {  // Buffer overflow
 					headerfound = false;
 					footerfound = false;
@@ -90,9 +106,7 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 				} 
 			} // While data available	
 		} // !footerfound	
-	} else {
-		ESP_LOGD("DmsrCustom","No data available. Is P1 port connected?");
-	}	
+	} 	
 	return false;	  
   }
 
@@ -158,10 +172,14 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 	if (now - lastread > DELAY_MS || lastread == 0) {
 		lastread = now;
 		digitalWrite(D5,HIGH); // Set high, request new message from P1 port
-		bool have_message = read_message();
-		if (have_message) { 
-			digitalWrite(D5,LOW); // Set low, stop requesting messages from P1 port
-		} // If No message was read, keep output port high and retry later	
+		if (data_available()) { // Check for x seconds if there's data available
+			bool have_message = read_message();
+			if (have_message) { 
+				digitalWrite(D5,LOW); // Set low, stop requesting messages from P1 port
+			} // If No message was read, keep output port high and retry later
+		} else {
+				ESP_LOGD("DmsrCustom","No data available. Is P1 port connected?");
+		}	
 	}
   }	
 

@@ -49,6 +49,7 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 	unsigned long previousMillis = currentMillis; 
   
 	while (currentMillis - previousMillis < WAIT_FOR_DATA_MS) { // wait in miliseconds
+		currentMillis = millis();
 		if (available()) {
 			return true;
 		}
@@ -68,6 +69,7 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 	if (available()) { // Check to be sure
 		// Messages come in batches. Read until footer.
 		while (!footerfound && currentMillis - previousMillis < 5000) { // Loop while there's no footer found with a maximum of 5 seconds
+			currentMillis = millis();
 			// Loop while there's data to read
 			while (available()) { // Loop while there's data 
 				if (telegramlen >= P1_MAXTELEGRAMLENGTH) {  // Buffer overflow

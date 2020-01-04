@@ -4,7 +4,7 @@
 using namespace esphome;
 
 #define P1_MAXTELEGRAMLENGTH 1500
-#define DELAY_MS 300000 // Delay in miliseconds before reading another telegram
+#define DELAY_MS 60000 // Delay in miliseconds before reading another telegram
 
 // Use data structure according to: https://github.com/matthijskooijman/arduino-dsmr
 
@@ -49,47 +49,50 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 	telegramlen = 0;
 	bytes_read = 0;	
 	
-	// Messages come in batches. Read until footer.
-	while (!footerfound) {
-		// Loop while there's data to read
-		while (available()) {
-			if (telegramlen >= P1_MAXTELEGRAMLENGTH) {  // Buffer overflow
-				headerfound = false;
-				footerfound = false;
-				ESP_LOGD("DmsrCustom","Error: Message larger than buffer");
-			}
-			bytes_read++;
-			c = read();
-			if (c == 47) { // header: forward slash
-				// ESP_LOGD("DmsrCustom","Header found");
-				headerfound = true;
-				telegramlen = 0;
-			}
-			if (headerfound) {
-				telegram[telegramlen] = c;
-				telegramlen++;
-				if (c == 33) { // footer: exclamation mark
-					ESP_LOGD("DmsrCustom","Footer found");
-					footerfound = true;
-				} else {
-					if (footerfound && c == 10) { // last \n after footer
-						// Parse message
-						MyData data;
-						// ESP_LOGD("DmsrCustom","Trying to parse");
-						ParseResult<void> res = P1Parser::parse(&data, telegram, telegramlen, false); // Parse telegram accoring to data definition. Ignore unknown values.
-						if (res.err) {
-							// Parsing error, show it
-							Serial.println(res.fullError(telegram, telegram + telegramlen));
-						} else {
-							publish_sensors(data);
-							return true; // break out function
-						}
-					}	
+	if (available()) {
+		// Messages come in batches. Read until footer.
+		while (!footerfound) {
+			// Loop while there's data to read
+			while (available()) {
+				if (telegramlen >= P1_MAXTELEGRAMLENGTH) {  // Buffer overflow
+					headerfound = false;
+					footerfound = false;
+					ESP_LOGD("DmsrCustom","Error: Message larger than buffer");
 				}
-			} 
-		} // While data available	
-	} // !footerfound	
-	ESP_LOGD("DmsrCustom","Exited after: %i bytes", bytes_read);
+				bytes_read++;
+				c = read();
+				if (c == 47) { // header: forward slash
+					// ESP_LOGD("DmsrCustom","Header found");
+					headerfound = true;
+					telegramlen = 0;
+				}
+				if (headerfound) {
+					telegram[telegramlen] = c;
+					telegramlen++;
+					if (c == 33) { // footer: exclamation mark
+						ESP_LOGD("DmsrCustom","Footer found");
+						footerfound = true;
+					} else {
+						if (footerfound && c == 10) { // last \n after footer
+							// Parse message
+							MyData data;
+							// ESP_LOGD("DmsrCustom","Trying to parse");
+							ParseResult<void> res = P1Parser::parse(&data, telegram, telegramlen, false); // Parse telegram accoring to data definition. Ignore unknown values.
+							if (res.err) {
+								// Parsing error, show it
+								Serial.println(res.fullError(telegram, telegram + telegramlen));
+							} else {
+								publish_sensors(data);
+								return true; // break out function
+							}
+						}	
+					}
+				} 
+			} // While data available	
+		} // !footerfound	
+	} else {
+		ESP_LOGD("DmsrCustom","No data available. Is P1 port connected?");
+	}	
 	return false;	  
   }
 
@@ -156,7 +159,9 @@ class CustomP1UartComponent : public Component, public uart::UARTDevice {
 		lastread = now;
 		digitalWrite(D5,HIGH); // Set high, request new message from P1 port
 		bool have_message = read_message();
-		digitalWrite(D5,LOW); // Set low, stop requesting messages from P1 port
+		if (have_message) { 
+			digitalWrite(D5,LOW); // Set low, stop requesting messages from P1 port
+		} // If No message was read, keep output port high and retry later	
 	}
   }	
 

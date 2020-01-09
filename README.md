@@ -1,6 +1,6 @@
 # CustomP1UartComponent
 
-This is my first custom component for EspHome. It can be used to read DSMR data from the P1 port of dutch smart meters
+This is my first custom component for EspHome. It can be used to read DSMR data from the P1 port of dutch smart meters with an ESP module and pubish the result in [Home Assistant](https://www.home-assistant.io/).
 
 The work is based on these projects:
 - https://esphome.io/custom/uart.html (The project where the custom component is for)

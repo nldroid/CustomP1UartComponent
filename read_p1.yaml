@@ -93,7 +93,7 @@ sensor:
       accuracy_decimals: 3      
       filters:
         - multiply: 1000
-    - name: "Power Delivered L2 Sensor"
+    - name: "Power Delivered L3 Sensor"
       unit_of_measurement: W
       accuracy_decimals: 3      
       filters:
@@ -108,7 +108,7 @@ sensor:
       accuracy_decimals: 3      
       filters:
         - multiply: 1000
-    - name: "Power Returned L2 Sensor"
+    - name: "Power Returned L3 Sensor"
       unit_of_measurement: W
       accuracy_decimals: 3      
       filters:

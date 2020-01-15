@@ -29,3 +29,6 @@ Just add the .h file in your config folder and see the .yaml file for usage
 The software is only usable for meters with [8N1](https://en.wikipedia.org/wiki/8-N-1) serial communication. This is the case for newer dsmr protocols. Older procols use 7E1. You can change the software and shift the char one bit (c &= ~(1 << 7);).
 Real old dsmr protocols don't have a CRC at the end of a telegram and the dsmr parser that i use, doesn't support these old protocols.
 
+## Expirimental board with case
+![Board](docs/IMG_20200115_192406.jpg)
+![case](docs/IMG_20200115_192436.jpg)

@@ -1,3 +1,8 @@
+# Note
+This component isn't needed anymore because esphome supports the DSMR protocol now in the standard library: [DMSR Component](https://esphome.io/components/sensor/dsmr.html)
+
+I leave the page online for reference and the hardware info.
+
 # CustomP1UartComponent
 
 This is my first custom component for EspHome. It can be used to read DSMR data from the P1 port of dutch smart meters with an ESP module and pubish the result in [Home Assistant](https://www.home-assistant.io/).
